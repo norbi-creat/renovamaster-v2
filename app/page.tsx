@@ -1,48 +1,60 @@
 const exportPDF = async () => {
   const doc = new jsPDF();
   
+  // 1. Alapadatok kiírása
   doc.setFontSize(18);
-  doc.text("RenovaMaster AI - Muszaki Jelentes", 14, 20);
+  doc.text("RenovaMaster AI - Műszaki Jelentés", 14, 20);
   doc.setFontSize(10);
-  doc.text(`Keszult: ${new Date().toLocaleDateString('hu-HU')}`, 14, 28);
+  doc.text(`Készült: ${new Date().toLocaleDateString('hu-HU')}`, 14, 28);
 
   const tableData = materials.map(m => [
     m.material_name,
     `${m.planned_quantity} ${m.unit}`,
-    m.is_verified ? "IGAZOLVA" : "VARAKOZIK"
+    m.is_verified ? "IGAZOLVA" : "VÁRAKOZIK"
   ]);
 
   (doc as any).autoTable({
-    head: [['Anyag megnevezese', 'Mennyiseg', 'Allapot']],
+    head: [['Anyag megnevezése', 'Mennyiség', 'Állapot']],
     body: tableData,
     startY: 40,
-    theme: 'striped'
+    theme: 'grid'
   });
 
   let currentY = (doc as any).lastAutoTable.finalY + 20;
-  
+
+  // 2. Képek letöltése speciális módon
   for (const item of materials) {
     if (item.is_verified && item.photo_url) {
       try {
-        // EZ A TRÜKK: Egy külső proxy-n keresztül kérjük a képet, ami megoldja a CORS-t
-        const rawUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/material-photos/${item.photo_url}`;
-        const proxiedUrl = `https://images.weserv.nl/?url=${encodeURIComponent(rawUrl)}&output=jpg&q=80`;
-        
-        const base64Img = await getBase64ImageFromURL(proxiedUrl);
-        
-        if (currentY > 240) {
+        // Közvetlenül a Supabase-től kérjük le a fájl tartalmát (blob-ként)
+        const { data, error } = await supabase.storage
+          .from('material-photos')
+          .download(item.photo_url);
+
+        if (error) throw error;
+
+        // Átalakítás Base64 formátumra, amit a PDF szeret
+        const buffer = await data.arrayBuffer();
+        const base64 = btoa(
+          new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+        const dataUrl = `data:image/jpeg;base64,${base64}`;
+
+        if (currentY > 230) {
           doc.addPage();
           currentY = 20;
         }
 
-        doc.text(`Tetel: ${item.material_name}`, 14, currentY);
-        doc.addImage(base64Img, 'JPEG', 14, currentY + 5, 80, 60);
-        currentY += 75;
+        doc.setFontSize(12);
+        doc.text(`Tétel: ${item.material_name}`, 14, currentY);
+        doc.addImage(dataUrl, 'JPEG', 14, currentY + 5, 100, 75);
+        currentY += 90;
+
       } catch (e) {
-        console.error("Kep hiba:", e);
+        console.error("Hiba a PDF képnél:", e);
       }
     }
   }
 
-  doc.save("Jelentes.pdf");
+  doc.save(`RenovaMaster-Dokumentacio.pdf`);
 };
