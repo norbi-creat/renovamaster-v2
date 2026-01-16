@@ -2,7 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import { CheckCircle2, Clock, MapPin, Camera } from 'lucide-react';
 
 // Ez a sor kényszeríti a Vercelt, hogy ne tárolja el a régi adatokat (cache)
-export const revalidate = 0; 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function Dashboard() {
   const supabase = createClient(
@@ -67,3 +68,4 @@ export default async function Dashboard() {
     </div>
   );
 }
+
