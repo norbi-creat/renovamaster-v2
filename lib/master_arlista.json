@@ -1,0 +1,51 @@
+{
+  "project_info": {
+    "version": "3.0",
+    "last_update": "2024-05-22",
+    "currency": "HUF"
+  },
+  "munkanemek": {
+    "21_komuves": {
+      "nev": "Kőműves munkák",
+      "tetelek": [
+        {"kod": "21-001-1", "nev": "Aljzatbeton készítés (C16, 6cm)", "egyseg": "m2", "norma": {"cement": 18, "soder": 0.08}, "trigger": "padlo"},
+        {"kod": "21-011-2", "nev": "Válaszfal építés (10-es tégla)", "egyseg": "m2", "norma": {"tegla": 10.5, "habarcs": 0.02}, "trigger": "fal"}
+      ]
+    },
+    "33_szigeteles": {
+      "nev": "Szigetelések",
+      "tetelek": [
+        {"kod": "33-011-1", "nev": "Talajnedvesség elleni szigetelés", "egyseg": "m2", "norma": {"bitumenes_lemez": 1.15, "gaz": 0.35}, "trigger": "aljzat_vizszintes"},
+        {"kod": "33-201-1", "nev": "Injektált falszigetelés (krém)", "egyseg": "fm", "norma": {"szigetelo_krem": 1.2, "furatzaro": 0.5}, "trigger": "fal_nedvesseg"}
+      ]
+    },
+    "45_festes": {
+      "nev": "Festés, Mázolás",
+      "tetelek": [
+        {"kod": "45-001-1", "nev": "Falfelület glettelése (2 rétegben)", "egyseg": "m2", "norma": {"glettanyag": 1.2, "csiszolopapir": 0.1}, "trigger": "falfelulet"},
+        {"kod": "45-301-2", "nev": "Airless gépi festés", "egyseg": "m2", "norma": {"festek": 0.4, "tisztitoszer": 0.02}, "trigger": "nagy_falfelulet"}
+      ]
+    },
+    "47_hidegburkolas": {
+      "nev": "Hidegburkolás",
+      "tetelek": [
+        {"kod": "47-111-2", "nev": "Oldalfal burkolás (hálóba)", "egyseg": "m2", "norma": {"lap": 1.1, "ragaszto": 4.5, "fuga": 0.5}, "trigger": "falcsempe"},
+        {"kod": "47-121-1", "nev": "Furat készítés keményburkolatba", "egyseg": "db", "norma": {"gyemant_furo": 0.02}, "trigger": "cso_atkeles"}
+      ]
+    },
+    "48_melegburkolas": {
+      "nev": "Melegburkolás",
+      "tetelek": [
+        {"kod": "48-041-1", "nev": "Laminált padló fektetése", "egyseg": "m2", "norma": {"parketta": 1.05, "alatet": 1.02, "folia": 1.15}, "trigger": "padlo_szaraz"},
+        {"kod": "48-081-1", "nev": "Szegélyléc elhelyezése (PVC/MDF)", "egyseg": "fm", "norma": {"szegelylec": 1.05, "ragaszto": 0.1}, "trigger": "szegely_hossz"}
+      ]
+    },
+    "75_asztalos": {
+      "nev": "Épületasztalos munka",
+      "tetelek": [
+        {"kod": "75-011-1", "nev": "Beltéri ajtó beépítése (utólag szerelhető)", "egyseg": "db", "norma": {"ajto_szett": 1, "purhab": 0.5}, "trigger": "ajtonyilas"},
+        {"kod": "75-051-1", "nev": "Ablakpárkány elhelyezése", "egyseg": "fm", "norma": {"parkany": 1.05, "ragasztohab": 0.25}, "trigger": "ablak_also_el"}
+      ]
+    }
+  }
+}
