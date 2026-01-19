@@ -8,26 +8,29 @@ export async function POST(request: Request) {
     const { pdfBase64, date, taskName } = await request.json();
 
     const data = await resend.emails.send({
-      from: 'RenovaMaster <onboarding@resend.dev>', // Később saját domainre cserélhető
-      to: ['kahelisztokft@gmail.com'], // Ide írd a PM e-mail címét
+      from: 'RenovaMaster <onboarding@resend.dev>',
+      to: ['miski.norbert@gmail.com'], // Ide írd a PM címét!
       subject: `Napi Riport - ${taskName} - ${date}`,
       html: `
-        <h1>Napi Helyszíni Jelentés</h1>
-        <p>A mai napon a következő feladat elvégzésre került: <strong>${taskName}</strong></p>
-        <p>A részletes jelentés és a LiDAR adatok a mellékelt PDF-ben találhatóak.</p>
-        <br/>
-        <p>Üdvözlettel,<br/>RenovaMaster AI Rendszer</p>
+        <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
+          <h1 style="color: #2563eb;">RenovaMaster AI - Helyszíni Jelentés</h1>
+          <p>Munkavégzés dátuma: <strong>${date}</strong></p>
+          <p>Elvégzett feladat: <strong>${taskName}</strong></p>
+          <hr style="border: 1px solid #e2e8f0; margin: 20px 0;"/>
+          <p style="font-size: 12px; color: #64748b;">Ez egy automatikusan generált PDF jelentés a helyszíni operációról.</p>
+        </div>
       `,
       attachments: [
         {
           filename: `Riport_${date}.pdf`,
-          content: pdfBase64.split(',')[1], // Levágjuk a base64 fejlécet
+          content: pdfBase64.split(',')[1],
         },
       ],
     });
 
-    return NextResponse.json(data);
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    return NextResponse.json({ error });
+    console.error("Email küldési hiba:", error);
+    return NextResponse.json({ success: false, error }, { status: 500 });
   }
 }
