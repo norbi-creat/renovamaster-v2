@@ -15,7 +15,8 @@
     "resend": "3.1.0",
     "jspdf": "^2.5.1",
     "lucide-react": "^0.284.0",
-    "@supabase/supabase-js": "^2.38.4"
+    "@supabase/supabase-js": "^2.38.4",
+    "jspdf-autotable": "^3.8.1"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -27,6 +28,7 @@
     "typescript": "^5"
   }
 }
+
 
 
 
