@@ -18,7 +18,7 @@ export default function MainMenu() {
       title: "Munkalap", 
       desc: "Új megrendelés rögzítése", 
       icon: <ClipboardList className="text-emerald-500" />, 
-      path: "#", 
+      path: "/munkalap", 
       color: "border-l-emerald-500"
     },
     { 
@@ -77,4 +77,5 @@ export default function MainMenu() {
     </div>
   );
 }
+
 
