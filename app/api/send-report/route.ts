@@ -1,19 +1,20 @@
-export const runtime = 'edge';
-
-import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
+import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Kényszerítjük, hogy szerver oldali kód maradjon
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const { pdfBase64, date, taskName } = await request.json();
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const body = await request.json();
+    const { pdfBase64, date, taskName } = body;
 
-    const data = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: 'RenovaMaster <onboarding@resend.dev>',
-      to: ['miski.norbert@gmail.com'], 
+      to: ['miski.norbert@gmail.com'], // Saját email címed
       subject: `Napi Riport - ${taskName} - ${date}`,
-      html: `<h1>Napi Riport</h1><p>Feladat: ${taskName}</p><p>Dátum: ${date}</p>`,
+      html: `<strong>Riport elkészült: ${taskName}</strong>`,
       attachments: [
         {
           filename: `Riport_${date}.pdf`,
@@ -22,8 +23,12 @@ export async function POST(request: Request) {
       ],
     });
 
+    if (error) {
+      return NextResponse.json({ error }, { status: 400 });
+    }
+
     return NextResponse.json({ success: true, data });
-  } catch (error) {
-    return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
