@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
     const data = await resend.emails.send({
       from: 'RenovaMaster <onboarding@resend.dev>', // Később saját domainre cserélhető
-      to: ['projektmenedzser@ceged.hu'], // Ide írd a PM e-mail címét
+      to: ['kahelisztokft@gmail.com'], // Ide írd a PM e-mail címét
       subject: `Napi Riport - ${taskName} - ${date}`,
       html: `
         <h1>Napi Helyszíni Jelentés</h1>
