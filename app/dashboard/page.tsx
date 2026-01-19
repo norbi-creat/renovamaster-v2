@@ -66,53 +66,53 @@ export default function DashboardPage() {
         </div>
 
         {/* MŰSZAKVÉGI RIPORT PANEL */}
-<div className="md:col-span-3 bg-slate-900 text-white p-8 rounded-3xl shadow-2xl border border-slate-800 mt-4">
-  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-    <div className="space-y-2">
-      <h2 className="text-2xl font-bold flex items-center gap-3">
-        <Camera className="text-blue-400" /> Napi Zárás & Fotódokumentáció
-      </h2>
-      <p className="text-slate-400 text-sm italic">
-        A mai napon elvégzett: <span className="text-blue-300 font-bold">{selectedTask.nev}</span>
-      </p>
-    </div>
+        <div className="md:col-span-3 bg-slate-900 text-white p-8 rounded-3xl shadow-2xl border border-slate-800 mt-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold flex items-center gap-3">
+                <Camera className="text-blue-400" /> Napi Zárás & Fotódokumentáció
+             </h2>
+             <p className="text-slate-400 text-sm italic">
+               A mai napon elvégzett: <span className="text-blue-300 font-bold">{selectedTask.nev}</span>
+             </p>
+           </div>
 
-    <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-      {/* Fotó feltöltés gomb szimuláció */}
-      <label className="flex-1 sm:flex-none cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-700 px-6 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all group">
-        <Upload className="group-hover:scale-110 transition-transform text-blue-400" />
-        <span className="text-sm font-bold uppercase tracking-wider">Műszakvégi fotó</span>
-        <input type="file" className="hidden" accept="image/*" capture="environment" />
-      </label>
+           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+             {/* Fotó feltöltés gomb szimuláció */}
+             <label className="flex-1 sm:flex-none cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-700 px-6 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all group">
+               <Upload className="group-hover:scale-110 transition-transform text-blue-400" />
+               <span className="text-sm font-bold uppercase tracking-wider">Műszakvégi fotó</span>
+               <input type="file" className="hidden" accept="image/*" capture="environment" />
+             </label>
 
-      {/* Záró gomb */}
-      <button className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20 transition-all active:scale-95">
-        Nap lezárása
-      </button>
-    </div>
-  </div>
+             {/* Záró gomb */}
+             <button className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-500 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-lg shadow-blue-500/20 transition-all active:scale-95">
+               Nap lezárása
+             </button>
+           </div>
+         </div>
 
-  <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-800 pt-6">
-    <div className="text-center">
-      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Számított fogyás</p>
-      <p className="text-lg font-mono text-blue-400">~42.5 kg</p>
-    </div>
-    <div className="text-center border-l border-slate-800">
-      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Munkával töltve</p>
-      <p className="text-lg font-mono text-emerald-400">07:45 h</p>
-    </div>
-    <div className="text-center border-l border-slate-800">
-      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">LiDAR készültség</p>
-      <p className="text-lg font-mono text-white">68%</p>
-    </div>
-    <div className="text-center border-l border-slate-800">
-      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Következő anyag</p>
-      <p className="text-lg font-mono text-orange-400 italic">Fugázó</p>
-    </div>
-  </div>
-</div>
-
-        {/* 3. KRITIKUS FIGYELMEZTETÉS */}
+         <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-slate-800 pt-6">
+           <div className="text-center">
+             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Számított fogyás</p>
+             <p className="text-lg font-mono text-blue-400">~42.5 kg</p>
+          </div>
+          <div className="text-center border-l border-slate-800">
+             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Munkával töltve</p>
+             <p className="text-lg font-mono text-emerald-400">07:45 h</p>
+          </div>
+          <div className="text-center border-l border-slate-800">
+             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">LiDAR készültség</p>
+             <p className="text-lg font-mono text-white">68%</p>
+          </div>
+          <div className="text-center border-l border-slate-800">
+             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Következő anyag</p>
+             <p className="text-lg font-mono text-orange-400 italic">Fugázó</p>
+           </div>
+         </div>
+       </div>
+        
+       {/* 3. KRITIKUS FIGYELMEZTETÉS */}
         <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
           <h2 className="font-bold text-red-700 flex items-center gap-2 mb-4"><AlertTriangle /> Akadályok</h2>
           <div className="bg-white p-4 rounded-xl border border-red-200 shadow-sm">
