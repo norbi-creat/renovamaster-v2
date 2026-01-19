@@ -1,3 +1,5 @@
+export const runtime = 'edge'; // Ez a sor a megoldás!
+
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
 
