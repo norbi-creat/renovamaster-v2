@@ -1,50 +1,52 @@
 {
   "project_info": {
-    "version": "3.0",
-    "last_update": "2024-05-22",
-    "currency": "HUF"
+    "title": "Mester Árlista - Összesített Adatbázis",
+    "version": "4.0",
+    "source": "Google Sheets / Mester_Arlista",
+    "last_sync": "2024-05-22"
   },
   "munkanemek": {
-    "21_komuves": {
-      "nev": "Kőműves munkák",
+    "11_foldmunka": {
+      "nev": "Földmunka és tereprendezés",
       "tetelek": [
-        {"kod": "21-001-1", "nev": "Aljzatbeton készítés (C16, 6cm)", "egyseg": "m2", "norma": {"cement": 18, "soder": 0.08}, "trigger": "padlo"},
-        {"kod": "21-011-2", "nev": "Válaszfal építés (10-es tégla)", "egyseg": "m2", "norma": {"tegla": 10.5, "habarcs": 0.02}, "trigger": "fal"}
+        {"kod": "11-001-1", "nev": "Bozótirtás, gyökérkiszedéssel", "egyseg": "m2", "alkalmazas": "Telektisztítás felújítás előtt"},
+        {"kod": "11-002-2", "nev": "Meglévő burkolat bontása (beton)", "egyseg": "m3", "alkalmazas": "Udvari betonjárda feltörése"},
+        {"kod": "11-011-1.1", "nev": "Munkaárok kiemelése (szélesség <1,0m)", "egyseg": "m3", "alkalmazas": "Kerítés vagy közműárok ásása"},
+        {"kod": "11-091-1", "nev": "Drénárok ásása épületszigeteléshez", "egyseg": "fm", "alkalmazas": "Épület körüli vízszivárgó rendszer"}
+      ]
+    },
+    "21_komuves": {
+      "nev": "Kőműves munkák és betonozás",
+      "tetelek": [
+        {"kod": "21-001-1", "nev": "Falazat bontása kézi erővel (tégla)", "egyseg": "m3", "alkalmazas": "Válaszfalak, főfalak eltávolítása"},
+        {"kod": "21-021-1", "nev": "Teherhordó falazat (NF 30/38 tégla)", "egyseg": "m3", "alkalmazas": "Új főfalak építése bővítésnél"},
+        {"kod": "21-072-2", "nev": "Esztrich betonozás (simított)", "egyseg": "m2", "alkalmazas": "Burkolat fogadó rétege (5-7 cm)"},
+        {"kod": "21-151-1", "nev": "Homlokzati hőszigetelés (EPS - 15-20 cm)", "egyseg": "m2", "alkalmazas": "Külső falak hőszigetelése"},
+        {"kod": "21-281-1", "nev": "Kenhető vízszigetelés (fürdőszoba)", "egyseg": "m2", "alkalmazas": "Épített zuhanyzók, vizesblokkok védelme"}
+      ]
+    },
+    "22_gipszkarton": {
+      "nev": "Szárazépítés és gipszkarton szerelés",
+      "tetelek": [
+        {"kod": "22-001-1", "nev": "Gipszkarton válaszfal építése (75 mm)", "egyseg": "m2", "alkalmazas": "Normál térelválasztás (2x1 lap)"},
+        {"kod": "22-021-1", "nev": "Álmennyezet készítése (függesztett)", "egyseg": "m2", "alkalmazas": "Belmagasság csökkentés, vezetéktakarás"},
+        {"kod": "22-092-2", "nev": "Teljes felületi glettelés (Q3-Q4 - prémium)", "egyseg": "m2", "alkalmazas": "Súrolófény alatti tükörsima felület"}
       ]
     },
     "33_szigeteles": {
-      "nev": "Szigetelések",
+      "nev": "Szigetelési munkák (Víz, Hő, Hang)",
       "tetelek": [
-        {"kod": "33-011-1", "nev": "Talajnedvesség elleni szigetelés", "egyseg": "m2", "norma": {"bitumenes_lemez": 1.15, "gaz": 0.35}, "trigger": "aljzat_vizszintes"},
-        {"kod": "33-201-1", "nev": "Injektált falszigetelés (krém)", "egyseg": "fm", "norma": {"szigetelo_krem": 1.2, "furatzaro": 0.5}, "trigger": "fal_nedvesseg"}
-      ]
-    },
-    "45_festes": {
-      "nev": "Festés, Mázolás",
-      "tetelek": [
-        {"kod": "45-001-1", "nev": "Falfelület glettelése (2 rétegben)", "egyseg": "m2", "norma": {"glettanyag": 1.2, "csiszolopapir": 0.1}, "trigger": "falfelulet"},
-        {"kod": "45-301-2", "nev": "Airless gépi festés", "egyseg": "m2", "norma": {"festek": 0.4, "tisztitoszer": 0.02}, "trigger": "nagy_falfelulet"}
+        {"kod": "33-011-1", "nev": "Talajnedvesség elleni szigetelés (1 rtg. bitumenes)", "egyseg": "m2", "alkalmazas": "Aljzatbeton vízszintes szigetelése"},
+        {"kod": "33-201-1", "nev": "Utólagos falszigetelés injektálással (krém)", "egyseg": "fm", "alkalmazas": "Felszívódó nedvesség elleni vegyi gát"},
+        {"kod": "33-361-1", "nev": "Hanggátló nehézlemez elhelyezése (bitumenes)", "egyseg": "m2", "alkalmazas": "Szerelt falak/födémek extra hangszigetelése"}
       ]
     },
     "47_hidegburkolas": {
-      "nev": "Hidegburkolás",
+      "nev": "Hidegburkolás és előkészítés",
       "tetelek": [
-        {"kod": "47-111-2", "nev": "Oldalfal burkolás (hálóba)", "egyseg": "m2", "norma": {"lap": 1.1, "ragaszto": 4.5, "fuga": 0.5}, "trigger": "falcsempe"},
-        {"kod": "47-121-1", "nev": "Furat készítés keményburkolatba", "egyseg": "db", "norma": {"gyemant_furo": 0.02}, "trigger": "cso_atkeles"}
-      ]
-    },
-    "48_melegburkolas": {
-      "nev": "Melegburkolás",
-      "tetelek": [
-        {"kod": "48-041-1", "nev": "Laminált padló fektetése", "egyseg": "m2", "norma": {"parketta": 1.05, "alatet": 1.02, "folia": 1.15}, "trigger": "padlo_szaraz"},
-        {"kod": "48-081-1", "nev": "Szegélyléc elhelyezése (PVC/MDF)", "egyseg": "fm", "norma": {"szegelylec": 1.05, "ragaszto": 0.1}, "trigger": "szegely_hossz"}
-      ]
-    },
-    "75_asztalos": {
-      "nev": "Épületasztalos munka",
-      "tetelek": [
-        {"kod": "75-011-1", "nev": "Beltéri ajtó beépítése (utólag szerelhető)", "egyseg": "db", "norma": {"ajto_szett": 1, "purhab": 0.5}, "trigger": "ajtonyilas"},
-        {"kod": "75-051-1", "nev": "Ablakpárkány elhelyezése", "egyseg": "fm", "norma": {"parkany": 1.05, "ragasztohab": 0.25}, "trigger": "ablak_also_el"}
+        {"kod": "47-041-1", "nev": "Oldalfal burkolás (normál lap: 20x20 - 30x60)", "egyseg": "m2", "alkalmazas": "Standard beltéri fali csempézés"},
+        {"kod": "47-052-2", "nev": "Kültéri fagyálló padlóburkolás", "egyseg": "m2", "alkalmazas": "Teraszok, erkélyek burkolása"},
+        {"kod": "47-141-2", "nev": "Élcsonkítás (Jolly vágás / 45 fok)", "egyseg": "fm", "alkalmazas": "Külső sarkok gérbe vágása élvédő nélkül"}
       ]
     }
   }
