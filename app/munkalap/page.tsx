@@ -1,21 +1,21 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, FileText, User, MapPin, Hash, Box, Calendar, Calculator } from 'lucide-react';
+import { Plus, Trash2, FileText, User, MapPin, Hash, Box, Calculator } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 export default function FelmeroMunkalapPage() {
   const [munkanemek, setMunkanemek] = useState<any[]>([]);
   const [receptek, setReceptek] = useState<any[]>([]);
+  const [lidarInput, setLidarInput] = useState("");
   
-  // Ügyfél adatok a hivatalos szerződésminták alapján
   const [customer, setCustomer] = useState({
     name: '',
     birthPlaceDate: '',
     motherName: '',
     address: '',
     taxId: '',
-    location: '', // Kivitelezési helyszín
+    location: '',
     projectId: `PRJ-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
   });
 
@@ -99,7 +99,6 @@ export default function FelmeroMunkalapPage() {
       headStyles: { fillColor: [31, 41, 55] }
     });
 
-    // Anyaglista részletezése
     let finalY = (doc as any).lastAutoTable.cursor.y + 10;
     doc.text("RÉSZLETES ANYAGSZÜKSÉGLET:", 14, finalY);
     items.forEach(item => {
@@ -115,12 +114,26 @@ export default function FelmeroMunkalapPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-4">
       <div className="max-w-xl mx-auto space-y-4">
+        {/* FEJLÉC */}
         <div className="bg-slate-900 p-6 rounded-3xl text-white flex justify-between items-center shadow-xl">
           <h1 className="text-xl font-black italic text-blue-400 uppercase">Felmérő Dashboard</h1>
-          <button onClick={generatePDF} className="bg-blue-600 p-3 rounded-2xl"><FileText /></button>
+          <button onClick={generatePDF} className="bg-blue-600 p-3 rounded-2xl active:scale-95 transition-all"><FileText /></button>
         </div>
 
-        {/* Ügyfél Adatok Szekció */}
+        {/* LIDAR BEMENET KÁRTYA */}
+        <div className="bg-indigo-900 p-4 rounded-3xl text-white shadow-lg">
+          <div className="flex items-center gap-2 mb-2 text-indigo-200 text-[10px] font-black uppercase tracking-widest">
+            <Box size={14} /> LiDAR Adat Beillesztés
+          </div>
+          <textarea 
+            placeholder="Polycam / Canvas export adatok ide..."
+            className="w-full bg-indigo-800/50 p-3 rounded-xl text-xs outline-none border border-indigo-700 h-16 placeholder:text-indigo-400"
+            value={lidarInput}
+            onChange={(e) => setLidarInput(e.target.value)}
+          />
+        </div>
+
+        {/* ÜGYFÉL ADATOK */}
         <div className="bg-white p-5 rounded-3xl shadow-sm space-y-3 border border-slate-200">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Ügyfél adatok</p>
           <input placeholder="Megrendelő teljes neve" className="w-full p-3 bg-slate-50 rounded-xl text-sm" onChange={e => setCustomer({...customer, name: e.target.value})} />
@@ -129,10 +142,10 @@ export default function FelmeroMunkalapPage() {
             <input placeholder="Adóazonosító jel" className="p-3 bg-slate-50 rounded-xl text-sm" onChange={e => setCustomer({...customer, taxId: e.target.value})} />
           </div>
           <input placeholder="Lakóhely (Cím)" className="w-full p-3 bg-slate-50 rounded-xl text-sm" onChange={e => setCustomer({...customer, address: e.target.value})} />
-          <input placeholder="Kivitelezési helyszín (ha eltér)" className="w-full p-3 bg-blue-50 rounded-xl text-sm font-bold border border-blue-100" onChange={e => setCustomer({...customer, location: e.target.value})} />
+          <input placeholder="Kivitelezési helyszín" className="w-full p-3 bg-blue-50 rounded-xl text-sm font-bold border border-blue-100" onChange={e => setCustomer({...customer, location: e.target.value})} />
         </div>
 
-        {/* Tételek */}
+        {/* TÉTELEK */}
         {items.map((item, index) => (
           <div key={index} className="bg-white p-5 rounded-3xl shadow-md border border-slate-200">
             <select onChange={(e) => updateItemTask(index, e.target.value)} className="w-full p-3 bg-slate-100 rounded-xl mb-3 text-sm font-bold">
@@ -141,7 +154,7 @@ export default function FelmeroMunkalapPage() {
             </select>
             
             <div className="flex gap-4 items-end">
-              <div className="w-1/3">
+              <div className="w-1/2">
                 <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Mennyiség</p>
                 <input type="number" className="w-full p-3 bg-slate-50 rounded-xl font-bold" onChange={e => {
                   const newItems = [...items];
@@ -149,7 +162,7 @@ export default function FelmeroMunkalapPage() {
                   setItems(newItems);
                 }} />
               </div>
-              <div className="w-2/3 text-right">
+              <div className="w-1/2 text-right">
                 <p className="text-[10px] font-bold text-blue-600">Munkadíj: {Math.round(item.workPrice * item.qty).toLocaleString()} Ft</p>
                 <p className="text-[10px] font-bold text-emerald-600">Anyagdíj: {Math.round(item.materialPrice * item.qty).toLocaleString()} Ft</p>
               </div>
@@ -157,27 +170,19 @@ export default function FelmeroMunkalapPage() {
             
             {item.materials.length > 0 && (
               <div className="mt-3 p-3 bg-amber-50 rounded-xl text-[10px] text-amber-900 border border-amber-100">
-                <strong>Szükséges anyagok:</strong> {item.materials.map(m => `${m.component} (${Math.round(m.norma * item.qty * 100)/100} ${m.unit})`).join(', ')}
+                <strong>Anyagok:</strong> {item.materials.map(m => `${m.component} (${Math.round(m.norma * item.qty * 100)/100} ${m.unit})`).join(', ')}
               </div>
             )}
           </div>
         ))}
 
-        <button onClick={() => setItems([...items, { group: '', task: '', qty: 0, unit: '', workPrice: 0, materialPrice: 0, materials: [] }])} className="w-full p-4 border-2 border-dashed border-slate-300 rounded-3xl text-slate-400 font-bold">+ Új tétel hozzáadása</button>
+        <button onClick={() => setItems([...items, { group: '', task: '', qty: 0, unit: '', workPrice: 0, materialPrice: 0, materials: [] }])} className="w-full p-4 border-2 border-dashed border-slate-300 rounded-3xl text-slate-400 font-bold hover:bg-white transition-all">+ Új tétel</button>
 
-        {/* Összesítő */}
+        {/* ÖSSZESÍTŐ */}
         <div className="bg-slate-900 text-white p-6 rounded-[2.5rem] shadow-2xl">
-          <div className="flex justify-between text-xs opacity-60 mb-2">
-            <span>Nettó összesen:</span>
-            <span>{Math.round(totalNet).toLocaleString()} Ft</span>
-          </div>
-          <div className="flex justify-between text-xs opacity-60 mb-4 border-b border-slate-700 pb-2">
-            <span>ÁFA (27%):</span>
-            <span>{Math.round(vat).toLocaleString()} Ft</span>
-          </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm font-bold uppercase">Bruttó fizetendő:</span>
-            <span className="text-3xl font-black text-emerald-400">{Math.round(totalNet + vat).toLocaleString()} Ft</span>
+            <span className="text-sm font-bold uppercase opacity-60">Bruttó összesen:</span>
+            <span className="text-3xl font-black text-emerald-400">{Math.round((totalNet + vat)).toLocaleString()} Ft</span>
           </div>
         </div>
       </div>
