@@ -94,13 +94,16 @@ export default function FelmeroMunkalapPage() {
     const doc = new jsPDF();
     const now = new Date().toLocaleDateString('hu-HU');
     
-    // OLDAL 1: SZERZŐDÉS
-    doc.setFont("helvetica", "bold");
+    // Alapértelmezett betűtípus beállítása a magyar ékezetekhez
+    doc.setFont("times", "bold");
     doc.setFontSize(16);
     doc.text("VÁLLALKOZÁSI SZERZŐDÉS", 105, 20, { align: "center" });
 
     doc.setFontSize(10);
+    doc.setFont("times", "normal");
     doc.text("amely létrejött egyrészről", 20, 30);
+    
+    // Megrendelő táblázat - Keret nélkül, tiszta igazítással
     (doc as any).autoTable({
       startY: 32,
       body: [
@@ -109,11 +112,15 @@ export default function FelmeroMunkalapPage() {
         ['Lakóhelye:', customer.address || '...........................................'],
         ['Adóazonosító jele:', customer.taxId || '...........................................']
       ],
-      theme: 'plain', styles: { fontSize: 10, cellPadding: 1 }
+      theme: 'plain',
+      styles: { font: "times", fontSize: 10, cellPadding: 1 },
+      columnStyles: { 0: { cellWidth: 40 } }
     });
 
-    const nextY = (doc as any).lastAutoTable.finalY + 5;
+    const nextY = (doc as any).lastAutoTable.finalY + 8;
     doc.text("(a továbbiakban: Megrendelő), másrészről", 20, nextY);
+    
+    // Vállalkozó táblázat
     (doc as any).autoTable({
       startY: nextY + 2,
       body: [
@@ -122,25 +129,30 @@ export default function FelmeroMunkalapPage() {
         ['Székhelye:', provider.address],
         ['Adószáma:', provider.taxId]
       ],
-      theme: 'plain', styles: { fontSize: 10, cellPadding: 1 }
+      theme: 'plain',
+      styles: { font: "times", fontSize: 10, cellPadding: 1 },
+      columnStyles: { 0: { cellWidth: 40 } }
     });
 
-    const vY = (doc as any).lastAutoTable.finalY + 5;
+    const vY = (doc as any).lastAutoTable.finalY + 8;
+    doc.setFont("times", "bold");
     doc.text("mint vállalkozó (a továbbiakban: Vállalkozó) között az alábbi ingatlan", 20, vY);
-    doc.text(`Helyrajzi szám: ${customer.locationId || '...........'}  Cím: ${customer.location || '...........'}`, 20, vY + 5);
+    doc.setFont("times", "normal");
+    doc.text(`Helyrajzi szám: ${customer.locationId || '...........'}  Cím: ${customer.location || '...........'}`, 20, vY + 7);
     
-    doc.setFont("helvetica", "normal");
-    const bodyText = `felújítási munkáinak elvégzésére. A Vállalkozó vállalja a jelen szerződés 1. számú melléklete szerinti munkálatok teljesítését a mellékletben meghatározott díj ellenében. Jelen szerződésben nem szabályozott kérdésekben a Polgári Törvénykönyv (2013. évi V. törvény) az irányadó.`;
-    doc.text(doc.splitTextToSize(bodyText, 170), 20, vY + 12);
+    const bodyText = `felújítási munkáinak elvégzésére. A Vállalkozó vállalja a jelen szerződés 1. számú mellékletében részletezett munkálatok teljesítését a mellékletben meghatározott díj ellenében. Jelen szerződésben nem szabályozott kérdésekben a Polgári Törvénykönyv (2013. évi V. törvény) az irányadó.`;
+    const splitBody = doc.splitTextToSize(bodyText, 170);
+    doc.text(splitBody, 20, vY + 15);
 
-    const signY = vY + 60;
+    const signY = vY + 75;
     doc.text("Dátum: " + now, 20, signY);
     doc.line(20, signY + 20, 80, signY + 20); doc.text("Megrendelő", 40, signY + 25);
     doc.line(130, signY + 20, 190, signY + 20); doc.text("Vállalkozó (Kaheliszto Kft.)", 140, signY + 25);
 
-    // OLDAL 2: MELLÉKLET (KÖLTSÉGVETÉS)
+    // 2. OLDAL: KÖLTSÉGVETÉS
     doc.addPage();
-    doc.setFont("helvetica", "bold");
+    doc.setFont("times", "bold");
+    doc.setFontSize(14);
     doc.text("1. SZÁMÚ MELLÉKLET - RÉSZLETES KÖLTSÉGVETÉS", 105, 20, { align: "center" });
     
     const tableData = items.filter(i => i.task).map(i => [
@@ -154,25 +166,31 @@ export default function FelmeroMunkalapPage() {
       startY: 30,
       head: [['Megnevezés', 'Anyagköltség', 'Munkadíj', 'Nettó Össz.']],
       body: tableData,
-      theme: 'grid', headStyles: { fillColor: [30, 41, 59] }
+      theme: 'grid',
+      headStyles: { fillColor: [30, 41, 59], font: "times", fontStyle: 'bold' },
+      styles: { font: "times", fontSize: 9 }
     });
 
     const fY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(10);
     doc.text(`Nettó Mindösszesen: ${Math.round(totalNetOverall).toLocaleString()} Ft`, 120, fY);
     doc.text(`ÁFA (27%): ${Math.round(vat).toLocaleString()} Ft`, 120, fY + 7);
-    doc.setFontSize(12); doc.text(`BRUTTÓ VÉGÖSSZEG: ${Math.round(brutton).toLocaleString()} Ft`, 120, fY + 16);
+    doc.setFontSize(11);
+    doc.setFont("times", "bold");
+    doc.text(`BRUTTÓ VÉGÖSSZEG: ${Math.round(brutton).toLocaleString()} Ft`, 120, fY + 16);
 
-    doc.setFontSize(10); doc.text("FIZETÉSI ÜTEMEZÉS:", 20, fY + 30);
-    doc.setFont("helvetica", "normal");
-    doc.text([
+    doc.setFontSize(10);
+    doc.text("FIZETÉSI ÜTEMEZÉS:", 20, fY + 35);
+    doc.setFont("times", "normal");
+    const schedule = [
       `1. Előleg (30%): ${Math.round(brutton * 0.3).toLocaleString()} Ft`,
       `2. Részszámla (40%): ${Math.round(brutton * 0.4).toLocaleString()} Ft`,
       `3. Végszámla (30%): ${Math.round(brutton * 0.3).toLocaleString()} Ft`
-    ], 20, fY + 37);
+    ];
+    doc.text(schedule, 20, fY + 42);
 
     doc.save(`Szerzodes_Kaheliszto_${customer.name || 'projekt'}.pdf`);
   };
-
   return (
     <div className="min-h-screen bg-[#f1f5f9] pb-32 font-sans text-slate-900">
       
