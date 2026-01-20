@@ -61,7 +61,6 @@ export default function FelmeroMunkalapPage() {
   const totalHours = items.reduce((sum, i) => sum + (i.norma * i.qty), 0);
   const workDays = totalHours > 0 ? Math.ceil(totalHours / (workers * 8)) : 0;
   
-  // KÜLÖNVÁLASZTOTT ÖSSZEGEK
   const totalNetWork = items.reduce((sum, i) => sum + (i.workPrice * i.qty), 0);
   const totalNetMaterial = items.reduce((sum, i) => sum + (i.materialPrice * i.qty), 0);
   const totalNetOverall = totalNetWork + totalNetMaterial;
@@ -96,21 +95,20 @@ export default function FelmeroMunkalapPage() {
 
       <div className="max-w-xl mx-auto p-4 space-y-6">
         
+        {/* FELMÉRÉS FÜL */}
         {activeTab === 'felmeres' && (
           <div className="space-y-6 animate-in fade-in duration-500">
-            {/* LIDAR IMPORT */}
             <div className="bg-[#1e1b4b] p-5 rounded-[2rem] text-white shadow-xl border border-indigo-500/20">
               <div className="flex items-center gap-2 mb-3"><Box size={18} /><p className="text-xs font-black uppercase tracking-widest">LiDAR Adat Import</p></div>
-              <textarea placeholder="Másold ide a LiDAR adatokat..." className="w-full bg-[#312e81]/40 p-4 rounded-2xl text-xs outline-none border border-indigo-400/20 h-20 resize-none" value={lidarInput} onChange={(e) => setLidarInput(e.target.value)} />
+              <textarea placeholder="LiDAR adatok..." className="w-full bg-[#312e81]/40 p-4 rounded-2xl text-xs outline-none border border-indigo-400/20 h-20 resize-none" value={lidarInput} onChange={(e) => setLidarInput(e.target.value)} />
             </div>
 
-            {/* ÜGYFÉL ADATOK */}
             <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-4">
               <div className="flex items-center gap-2 mb-2 text-blue-600 font-black uppercase tracking-widest text-xs"><User size={18} /> Ügyfél & Helyszín</div>
               <input placeholder="Megrendelő neve" className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold border border-slate-100" onChange={e => setCustomer({...customer, name: e.target.value})} />
               <div className="grid grid-cols-2 gap-3">
                 <input placeholder="Születési adatok" className="p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100" onChange={e => setCustomer({...customer, birthPlaceDate: e.target.value})} />
-                <input placeholder="Adószám" className="p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100" onChange={e => setCustomer({...customer, taxId: e.target.value})} />
+                <input placeholder="Adószám" className="p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100 font-mono" onChange={e => setCustomer({...customer, taxId: e.target.value})} />
               </div>
               <input placeholder="Lakcím" className="w-full p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100" onChange={e => setCustomer({...customer, address: e.target.value})} />
               <div className="pt-2 border-t border-slate-50 grid grid-cols-3 gap-3">
@@ -119,7 +117,6 @@ export default function FelmeroMunkalapPage() {
               </div>
             </div>
 
-            {/* TÉTELEK */}
             {items.map((item, index) => (
               <div key={index} className="bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-100">
                 <select onChange={(e) => updateItemTask(index, e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl mb-4 text-sm font-bold border border-slate-200 outline-none">
@@ -136,7 +133,6 @@ export default function FelmeroMunkalapPage() {
                     }} />
                   </div>
                   <div className="text-right">
-                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Nettó ár</p>
                     <p className="text-2xl font-black text-blue-600 tracking-tighter">{Math.round((item.workPrice + item.materialPrice) * item.qty).toLocaleString()} Ft</p>
                   </div>
                 </div>
@@ -146,34 +142,51 @@ export default function FelmeroMunkalapPage() {
           </div>
         )}
 
+        {/* TERVEZÉS FÜL */}
         {activeTab === 'tervezes' && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-            {/* PÉNZÜGYI ÖSSZESÍTŐ (ÚJ) */}
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-100">
-              <div className="flex items-center gap-2 mb-6 text-slate-800 font-black uppercase tracking-widest text-xs">
+            
+            {/* 1. PÉNZÜGYI ÖSSZESÍTŐ */}
+            <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
+              <div className="flex items-center gap-2 mb-4 text-slate-800 font-black uppercase tracking-widest text-xs">
                 <Receipt size={18} className="text-emerald-500" /> Költségösszesítő (Nettó)
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <Hammer size={20} className="text-blue-500" />
-                    <span className="text-sm font-bold text-blue-900">Összes Munkadíj</span>
-                  </div>
+                  <div className="flex items-center gap-3"><Hammer size={18} className="text-blue-500" /><span className="text-xs font-bold text-blue-900 uppercase">Munkadíj</span></div>
                   <span className="font-black text-blue-600">{Math.round(totalNetWork).toLocaleString()} Ft</span>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <Wallet size={20} className="text-emerald-500" />
-                    <span className="text-sm font-bold text-emerald-900">Összes Anyagdíj</span>
-                  </div>
+                  <div className="flex items-center gap-3"><Wallet size={18} className="text-emerald-500" /><span className="text-xs font-bold text-emerald-900 uppercase">Anyagdíj</span></div>
                   <span className="font-black text-emerald-600">{Math.round(totalNetMaterial).toLocaleString()} Ft</span>
                 </div>
               </div>
             </div>
 
-            {/* IDŐTERV ÉS ANYAGKIGYŰJTÉS (marad a korábbi) */}
-            <div className="bg-[#0f172a] p-8 rounded-[3rem] text-white shadow-2xl">
-               <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-6">Anyagszükséglet</h3>
+            {/* 2. IDŐTERV ÉS ERŐFORRÁS (VISSZATÉVE) */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 opacity-80 mb-4"><Clock size={18} /><p className="text-xs font-black uppercase tracking-[0.2em]">Időgazdálkodás</p></div>
+                <div className="grid grid-cols-2 gap-8 mb-6">
+                  <div><p className="text-[10px] font-bold uppercase opacity-60 mb-1 tracking-widest">Összes munkaóra</p><p className="text-4xl font-black">{totalHours.toFixed(1)}</p></div>
+                  <div><p className="text-[10px] font-bold uppercase opacity-60 mb-1 tracking-widest">Munkanapok</p><p className="text-4xl font-black">{workDays}</p></div>
+                </div>
+                <div className="bg-white/10 p-4 rounded-2xl border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold uppercase opacity-80">Létszám (Brigád)</p>
+                    <span className="text-xl font-black text-blue-200">{workers} fő</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Users size={18} /><input type="range" min="1" max="10" value={workers} onChange={(e) => setWorkers(parseInt(e.target.value))} className="flex-1 accent-white" />
+                  </div>
+                </div>
+              </div>
+              <Calendar size={120} className="absolute -right-8 -top-8 opacity-10 rotate-12" />
+            </div>
+
+            {/* 3. ÖSSZESÍTETT ANYAGKIGYŰJTÉS */}
+            <div className="bg-[#0f172a] p-8 rounded-[3rem] text-white shadow-2xl border-b-[10px] border-emerald-500">
+               <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-6">Összesített Anyagszükséglet</h3>
                <div className="space-y-3">
                   {getAggregatedMaterials().map((m, i) => (
                     <div key={i} className="flex justify-between text-sm border-b border-slate-800 pb-2">
@@ -184,23 +197,28 @@ export default function FelmeroMunkalapPage() {
                </div>
             </div>
 
-            <button className="w-full bg-blue-600 text-white p-6 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-               <FileText size={24} /> SZERZŐDÉS GENERÁLÁSA
-            </button>
+            {/* SZERZŐDÉS GENERÁLÁSA */}
+            <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-4 text-center">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Szerződéskötési dátum</p>
+              <input type="date" className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold border border-slate-100 outline-none text-blue-600 mb-2" onChange={e => setCustomer({...customer, startDate: e.target.value})} />
+              <button className="w-full bg-blue-600 text-white p-6 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                 <FileText size={24} /> PDF GENERÁLÁSA
+              </button>
+            </div>
           </div>
         )}
 
-        {/* BRUTTÓ ÖSSZESÍTŐ - MINDIG LÁTSZIK */}
+        {/* FIX BRUTTÓ ÖSSZESÍTŐ */}
         <div className="bg-[#0f172a] text-white p-8 rounded-[3rem] shadow-2xl border-b-[10px] border-blue-600 flex justify-between items-center sticky bottom-4 z-40">
           <div>
-            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">Bruttó fizetendő</p>
+            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Fizetendő (Bruttó)</p>
             <span className="text-4xl font-black text-emerald-400 tracking-tighter tabular-nums">
               {Math.round(totalNetOverall + vat).toLocaleString()} Ft
             </span>
           </div>
           <div className="text-right">
-             <p className="text-[10px] font-bold opacity-40 uppercase">ÁFA (27%)</p>
-             <p className="font-bold text-sm text-slate-300">{Math.round(vat).toLocaleString()} Ft</p>
+             <p className="text-[10px] font-bold opacity-40 uppercase">27% ÁFÁ-VAL</p>
+             <p className="font-bold text-sm text-slate-300">Nettó: {Math.round(totalNetOverall).toLocaleString()} Ft</p>
           </div>
         </div>
       </div>
