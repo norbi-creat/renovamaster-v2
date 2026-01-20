@@ -11,7 +11,7 @@ export default function FelmeroMunkalapPage() {
   const [lidarInput, setLidarInput] = useState("");
   const [workers, setWorkers] = useState(2);
   
-  // VÁLLALKOZÁS ADATAI
+  // FIX VÁLLALKOZÓI ADATOK
   const provider = {
     name: 'Kaheliszto Építőipari Kft.',
     address: '3561 Felsőzsolca, Nagyszilvás u. 26.',
@@ -28,7 +28,7 @@ export default function FelmeroMunkalapPage() {
     task: '', qty: 0, unit: '', workPrice: 0, materialPrice: 0, materials: [] as any[], norma: 0 
   }]);
 
-  // ADATOK BETÖLTÉSE
+  // ADATOK BETÖLTÉSE GOOGLE SHEETS-BŐL
   useEffect(() => {
     const sheetId = "1QDkPgvvPx7wwTKlvoDLLwIWlY1z6ladQtoRynOYsHa4";
     const masterUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=249861285`;
@@ -89,27 +89,88 @@ export default function FelmeroMunkalapPage() {
     return Object.values(totals);
   };
 
+  // --- PDF GENERÁLÁS (MINTA ALAPJÁN) ---
   const generatePDF = () => {
     const doc = new jsPDF();
     const now = new Date().toLocaleDateString('hu-HU');
+    
+    // OLDAL 1: SZERZŐDÉS
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text(provider.name, 20, 20);
-    doc.setFontSize(8); doc.setFont("helvetica", "normal");
-    doc.text([`Székhely: ${provider.address}`, `Adószám: ${provider.taxId} | Cégjegyzékszám: ${provider.regId}`], 20, 26);
-    doc.setFontSize(16); doc.setFont("helvetica", "bold");
-    doc.text("VÁLLALKOZÁSI SZERZŐDÉS", 105, 45, { align: "center" });
-    doc.setFontSize(9); doc.text(`Projekt: ${customer.projectId}`, 20, 55); doc.text(`Dátum: ${now}`, 160, 55);
-    doc.line(20, 58, 190, 58);
-    doc.text("MEGRENDELŐ:", 20, 65); doc.setFont("helvetica", "normal");
-    doc.text([`Név: ${customer.name || '...'}`, `Lakcím: ${customer.address || '...'}`, `Helyszín: ${customer.location || '...'} (Hrsz: ${customer.locationId || '...'})`], 20, 70);
-    const tableData = items.filter(i => i.task).map(i => [i.task, `${i.qty} ${i.unit}`, `${Math.round(i.workPrice + i.materialPrice).toLocaleString()} Ft`, `${Math.round((i.workPrice + i.materialPrice) * i.qty).toLocaleString()} Ft`]);
-    (doc as any).autoTable({ startY: 85, head: [['Megnevezés', 'Menny.', 'Nettó Egységár', 'Összesen']], body: tableData, theme: 'grid', headStyles: { fillColor: [30, 41, 59] } });
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFont("helvetica", "bold"); doc.text(`BRUTTÓ: ${Math.round(brutton).toLocaleString()} Ft`, 130, finalY + 15);
-    doc.text("FIZETÉSI ÜTEMEZÉS:", 20, finalY + 25); doc.setFont("helvetica", "normal");
-    doc.text([`1. Előleg (30%): ${Math.round(brutton * 0.3).toLocaleString()} Ft`, `2. Részszámla (40%): ${Math.round(brutton * 0.4).toLocaleString()} Ft`, `3. Végszámla (30%): ${Math.round(brutton * 0.3).toLocaleString()} Ft`], 20, finalY + 32);
-    doc.save(`Szerzodes_${customer.name || 'Ugyfel'}.pdf`);
+    doc.setFontSize(16);
+    doc.text("VÁLLALKOZÁSI SZERZŐDÉS", 105, 20, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.text("amely létrejött egyrészről", 20, 30);
+    (doc as any).autoTable({
+      startY: 32,
+      body: [
+        ['Név:', customer.name || '...........................................'],
+        ['Születési hely/idő:', customer.birthPlaceDate || '...........................................'],
+        ['Lakóhelye:', customer.address || '...........................................'],
+        ['Adóazonosító jele:', customer.taxId || '...........................................']
+      ],
+      theme: 'plain', styles: { fontSize: 10, cellPadding: 1 }
+    });
+
+    const nextY = (doc as any).lastAutoTable.finalY + 5;
+    doc.text("(a továbbiakban: Megrendelő), másrészről", 20, nextY);
+    (doc as any).autoTable({
+      startY: nextY + 2,
+      body: [
+        ['Cég neve:', provider.name],
+        ['Cégjegyzékszám:', provider.regId],
+        ['Székhelye:', provider.address],
+        ['Adószáma:', provider.taxId]
+      ],
+      theme: 'plain', styles: { fontSize: 10, cellPadding: 1 }
+    });
+
+    const vY = (doc as any).lastAutoTable.finalY + 5;
+    doc.text("mint vállalkozó (a továbbiakban: Vállalkozó) között az alábbi ingatlan", 20, vY);
+    doc.text(`Helyrajzi szám: ${customer.locationId || '...........'}  Cím: ${customer.location || '...........'}`, 20, vY + 5);
+    
+    doc.setFont("helvetica", "normal");
+    const bodyText = `felújítási munkáinak elvégzésére. A Vállalkozó vállalja a jelen szerződés 1. számú melléklete szerinti munkálatok teljesítését a mellékletben meghatározott díj ellenében. Jelen szerződésben nem szabályozott kérdésekben a Polgári Törvénykönyv (2013. évi V. törvény) az irányadó.`;
+    doc.text(doc.splitTextToSize(bodyText, 170), 20, vY + 12);
+
+    const signY = vY + 60;
+    doc.text("Dátum: " + now, 20, signY);
+    doc.line(20, signY + 20, 80, signY + 20); doc.text("Megrendelő", 40, signY + 25);
+    doc.line(130, signY + 20, 190, signY + 20); doc.text("Vállalkozó (Kaheliszto Kft.)", 140, signY + 25);
+
+    // OLDAL 2: MELLÉKLET (KÖLTSÉGVETÉS)
+    doc.addPage();
+    doc.setFont("helvetica", "bold");
+    doc.text("1. SZÁMÚ MELLÉKLET - RÉSZLETES KÖLTSÉGVETÉS", 105, 20, { align: "center" });
+    
+    const tableData = items.filter(i => i.task).map(i => [
+      i.task,
+      `${Math.round(i.materialPrice * i.qty).toLocaleString()} Ft`,
+      `${Math.round(i.workPrice * i.qty).toLocaleString()} Ft`,
+      `${Math.round((i.workPrice + i.materialPrice) * i.qty).toLocaleString()} Ft`
+    ]);
+
+    (doc as any).autoTable({
+      startY: 30,
+      head: [['Megnevezés', 'Anyagköltség', 'Munkadíj', 'Nettó Össz.']],
+      body: tableData,
+      theme: 'grid', headStyles: { fillColor: [30, 41, 59] }
+    });
+
+    const fY = (doc as any).lastAutoTable.finalY + 10;
+    doc.text(`Nettó Mindösszesen: ${Math.round(totalNetOverall).toLocaleString()} Ft`, 120, fY);
+    doc.text(`ÁFA (27%): ${Math.round(vat).toLocaleString()} Ft`, 120, fY + 7);
+    doc.setFontSize(12); doc.text(`BRUTTÓ VÉGÖSSZEG: ${Math.round(brutton).toLocaleString()} Ft`, 120, fY + 16);
+
+    doc.setFontSize(10); doc.text("FIZETÉSI ÜTEMEZÉS:", 20, fY + 30);
+    doc.setFont("helvetica", "normal");
+    doc.text([
+      `1. Előleg (30%): ${Math.round(brutton * 0.3).toLocaleString()} Ft`,
+      `2. Részszámla (40%): ${Math.round(brutton * 0.4).toLocaleString()} Ft`,
+      `3. Végszámla (30%): ${Math.round(brutton * 0.3).toLocaleString()} Ft`
+    ], 20, fY + 37);
+
+    doc.save(`Szerzodes_Kaheliszto_${customer.name || 'projekt'}.pdf`);
   };
 
   return (
@@ -129,93 +190,104 @@ export default function FelmeroMunkalapPage() {
 
       <div className="max-w-xl mx-auto p-4 space-y-6">
         
+        {/* --- FELMÉRÉS FÜL --- */}
         {activeTab === 'felmeres' && (
           <div className="space-y-6 animate-in fade-in duration-500">
-            {/* LiDAR */}
+            {/* LiDAR Import */}
             <div className="bg-[#1e1b4b] p-5 rounded-[2rem] text-white shadow-xl border border-indigo-500/20">
-              <div className="flex items-center gap-2 mb-3"><Box size={18} /><p className="text-xs font-black uppercase tracking-widest">LiDAR Import</p></div>
-              <textarea placeholder="Illeszd be az adatokat..." className="w-full bg-[#312e81]/40 p-4 rounded-2xl text-xs outline-none h-20 resize-none" value={lidarInput} onChange={(e) => setLidarInput(e.target.value)} />
+              <div className="flex items-center gap-2 mb-3"><Box size={18} /><p className="text-xs font-black uppercase tracking-widest text-indigo-300">LiDAR Adat Import</p></div>
+              <textarea placeholder="Másold ide a LiDAR adatokat..." className="w-full bg-[#312e81]/40 p-4 rounded-2xl text-xs outline-none border border-indigo-400/20 h-20 resize-none" value={lidarInput} onChange={(e) => setLidarInput(e.target.value)} />
             </div>
 
-            {/* Ügyfél Adatok */}
+            {/* Ügyfél adatok */}
             <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100 space-y-4">
-              <div className="flex items-center gap-2 mb-2 text-blue-600 font-black uppercase tracking-widest text-xs"><User size={18} /> Ügyfél & Helyszín</div>
-              <input placeholder="Megrendelő neve" className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold border border-slate-100" onChange={e => setCustomer({...customer, name: e.target.value})} />
+              <div className="flex items-center gap-2 mb-2 text-blue-600 font-black uppercase tracking-widest text-xs"><User size={18} /> Ügyfél Információk</div>
+              <input placeholder="Megrendelő teljes neve" className="w-full p-4 bg-slate-50 rounded-2xl text-sm font-bold border border-slate-100" onChange={e => setCustomer({...customer, name: e.target.value})} />
               <div className="grid grid-cols-2 gap-3">
                 <input placeholder="Születési adatok" className="p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100" onChange={e => setCustomer({...customer, birthPlaceDate: e.target.value})} />
-                <input placeholder="Adószám" className="p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100 font-mono" onChange={e => setCustomer({...customer, taxId: e.target.value})} />
+                <input placeholder="Adóazonosító jel" className="p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100 font-mono" onChange={e => setCustomer({...customer, taxId: e.target.value})} />
               </div>
-              <input placeholder="Lakcím" className="w-full p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100" onChange={e => setCustomer({...customer, address: e.target.value})} />
+              <input placeholder="Bejelentett lakcím" className="w-full p-4 bg-slate-50 rounded-2xl text-xs border border-slate-100" onChange={e => setCustomer({...customer, address: e.target.value})} />
               <div className="pt-2 border-t border-slate-50 grid grid-cols-3 gap-3">
-                <input placeholder="Hrsz." className="col-span-1 p-4 bg-blue-50/50 rounded-2xl text-xs font-bold border border-blue-100" onChange={e => setCustomer({...customer, locationId: e.target.value})} />
-                <input placeholder="Munkavégzés címe" className="col-span-2 p-4 bg-blue-50/50 rounded-2xl text-xs font-bold border border-blue-100" onChange={e => setCustomer({...customer, location: e.target.value})} />
+                <input placeholder="Hrsz." className="col-span-1 p-4 bg-blue-50/50 rounded-2xl text-xs font-bold border border-blue-100 text-blue-700" onChange={e => setCustomer({...customer, locationId: e.target.value})} />
+                <input placeholder="Kivitelezés pontos címe" className="col-span-2 p-4 bg-blue-50/50 rounded-2xl text-xs font-bold border border-blue-100 text-blue-700" onChange={e => setCustomer({...customer, location: e.target.value})} />
               </div>
             </div>
 
             {/* Tételek */}
             {items.map((item, index) => (
               <div key={index} className="bg-white p-6 rounded-[2.5rem] shadow-lg border border-slate-100">
-                <select onChange={(e) => updateItemTask(index, e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl mb-4 text-sm font-bold border border-slate-200 outline-none appearance-none">
+                <select onChange={(e) => updateItemTask(index, e.target.value)} className="w-full p-4 bg-slate-50 rounded-2xl mb-4 text-sm font-bold border border-slate-200 outline-none">
                   <option value="">Válassz munkanemet...</option>
                   {munkanemek.map((m, i) => <option key={i} value={m.label}>{m.label}</option>)}
                 </select>
                 <div className="flex justify-between items-end gap-4 border-t border-slate-50 pt-4">
                   <div className="flex-1">
-                    <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Mennyiség ({item.unit || 'm2'})</p>
-                    <input type="number" className="w-full p-4 bg-slate-100 rounded-2xl font-black text-xl outline-none" onChange={e => {
+                    <p className="text-[9px] font-black text-slate-400 uppercase mb-2 italic">Mennyiség ({item.unit || 'm2'})</p>
+                    <input type="number" className="w-full p-4 bg-slate-100 rounded-2xl font-black text-xl outline-none text-slate-700" onChange={e => {
                       const newItems = [...items];
                       newItems[index].qty = parseFloat(e.target.value) || 0;
                       setItems(newItems);
                     }} />
                   </div>
-                  <p className="text-2xl font-black text-blue-600 tracking-tighter">{Math.round((item.workPrice + item.materialPrice) * item.qty).toLocaleString()} Ft</p>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Sor összesen</p>
+                    <p className="text-2xl font-black text-blue-600 tracking-tighter tabular-nums">{Math.round((item.workPrice + item.materialPrice) * item.qty).toLocaleString()} Ft</p>
+                  </div>
                 </div>
               </div>
             ))}
-            <button onClick={() => setItems([...items, { task: '', qty: 0, unit: '', workPrice: 0, materialPrice: 0, materials: [], norma: 0 }])} className="w-full p-5 border-4 border-dashed border-slate-200 rounded-[2.5rem] text-slate-400 font-black">+ ÚJ TÉTEL</button>
+            <button onClick={() => setItems([...items, { task: '', qty: 0, unit: '', workPrice: 0, materialPrice: 0, materials: [], norma: 0 }])} className="w-full p-5 border-4 border-dashed border-slate-200 rounded-[2.5rem] text-slate-400 font-black hover:border-blue-200 hover:text-blue-400 transition-all">+ ÚJ TÉTEL HOZZÁADÁSA</button>
           </div>
         )}
 
+        {/* --- TERVEZÉS FÜL --- */}
         {activeTab === 'tervezes' && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-            {/* Pénzügyek */}
+            {/* Pénzügyi Bontás */}
             <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
-              <div className="flex items-center gap-2 mb-4 text-slate-800 font-black uppercase tracking-widest text-xs"><Receipt size={18} className="text-emerald-500" /> Költségösszesítő (Nettó)</div>
+              <div className="flex items-center gap-2 mb-4 text-slate-800 font-black uppercase tracking-widest text-xs"><Receipt size={18} className="text-emerald-500" /> Költségmegoszlás (Nettó)</div>
               <div className="space-y-3">
-                <div className="flex justify-between p-4 bg-blue-50 rounded-2xl"><span className="text-xs font-bold text-blue-900 uppercase">Munkadíj</span><span className="font-black text-blue-600">{Math.round(totalNetWork).toLocaleString()} Ft</span></div>
-                <div className="flex justify-between p-4 bg-emerald-50 rounded-2xl"><span className="text-xs font-bold text-emerald-900 uppercase">Anyagdíj</span><span className="font-black text-emerald-600">{Math.round(totalNetMaterial).toLocaleString()} Ft</span></div>
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl">
+                  <div className="flex items-center gap-3"><Hammer size={18} className="text-blue-500" /><span className="text-xs font-bold text-blue-900 uppercase">Munkadíj</span></div>
+                  <span className="font-black text-blue-600">{Math.round(totalNetWork).toLocaleString()} Ft</span>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl">
+                  <div className="flex items-center gap-3"><Wallet size={18} className="text-emerald-500" /><span className="text-xs font-bold text-emerald-900 uppercase">Anyagdíj</span></div>
+                  <span className="font-black text-emerald-600">{Math.round(totalNetMaterial).toLocaleString()} Ft</span>
+                </div>
               </div>
             </div>
 
             {/* Fizetési Ütemezés */}
             <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100">
-              <div className="flex items-center gap-2 mb-4 text-slate-800 font-black uppercase tracking-widest text-xs"><CreditCard size={18} className="text-amber-500" /> Fizetési Ütemezés (Bruttó)</div>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between p-3 bg-slate-50 rounded-xl"><span>30% Előleg</span><span className="font-bold">{Math.round(brutton * 0.3).toLocaleString()} Ft</span></div>
-                <div className="flex justify-between p-3 bg-slate-50 rounded-xl"><span>40% Részlet</span><span className="font-bold">{Math.round(brutton * 0.4).toLocaleString()} Ft</span></div>
-                <div className="flex justify-between p-3 bg-slate-50 rounded-xl border-l-4 border-amber-400"><span>30% Végszámla</span><span className="font-bold">{Math.round(brutton * 0.3).toLocaleString()} Ft</span></div>
+              <div className="flex items-center gap-2 mb-4 text-slate-800 font-black uppercase tracking-widest text-xs"><CreditCard size={18} className="text-amber-500" /> Ütemezett Kifizetések (Bruttó)</div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs p-3 bg-slate-50 rounded-xl"><span>1. Előleg (30%)</span><span className="font-bold">{Math.round(brutton * 0.3).toLocaleString()} Ft</span></div>
+                <div className="flex justify-between text-xs p-3 bg-slate-50 rounded-xl"><span>2. Részszámla (40%)</span><span className="font-bold">{Math.round(brutton * 0.4).toLocaleString()} Ft</span></div>
+                <div className="flex justify-between text-xs p-3 bg-slate-50 rounded-xl border-l-4 border-amber-400"><span>3. Végszámla (30%)</span><span className="font-bold">{Math.round(brutton * 0.3).toLocaleString()} Ft</span></div>
               </div>
             </div>
 
-            {/* Időgazdálkodás */}
+            {/* Időterv */}
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
               <div className="relative z-10">
-                <div className="flex items-center gap-2 opacity-80 mb-4"><Clock size={18} /><p className="text-xs font-black uppercase tracking-[0.2em]">Időgazdálkodás</p></div>
+                <div className="flex items-center gap-2 opacity-80 mb-4"><Clock size={18} /><p className="text-xs font-black uppercase tracking-[0.2em]">Kivitelezési idő</p></div>
                 <div className="grid grid-cols-2 gap-8 mb-6">
-                  <div><p className="text-[10px] font-bold uppercase opacity-60 mb-1">Munkaóra</p><p className="text-4xl font-black">{totalHours.toFixed(1)}</p></div>
-                  <div><p className="text-[10px] font-bold uppercase opacity-60 mb-1">Munkanap</p><p className="text-4xl font-black">{workDays}</p></div>
+                  <div><p className="text-[10px] font-bold uppercase opacity-60 mb-1">Teljes munkaóra</p><p className="text-4xl font-black">{totalHours.toFixed(1)}</p></div>
+                  <div><p className="text-[10px] font-bold uppercase opacity-60 mb-1">Munkanapok</p><p className="text-4xl font-black">{workDays}</p></div>
                 </div>
                 <div className="bg-white/10 p-4 rounded-2xl border border-white/10 flex items-center gap-4">
-                  <Users size={18} /><input type="range" min="1" max="10" value={workers} onChange={(e) => setWorkers(parseInt(e.target.value))} className="flex-1 accent-white" />
+                  <Users size={18} /><input type="range" min="1" max="12" value={workers} onChange={(e) => setWorkers(parseInt(e.target.value))} className="flex-1 accent-white" />
                   <span className="text-xl font-black">{workers} fő</span>
                 </div>
               </div>
               <Calendar size={120} className="absolute -right-8 -top-8 opacity-10 rotate-12" />
             </div>
 
-            {/* Anyaglista */}
+            {/* Anyagkigyűjtés */}
             <div className="bg-[#0f172a] p-8 rounded-[3rem] text-white shadow-2xl border-b-[10px] border-emerald-500">
-               <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-6">Összesített Anyagszükséglet</h3>
+               <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-6 underline underline-offset-8 decoration-emerald-500/30">Anyagszükséglet Összesítve</h3>
                <div className="space-y-3">
                   {getAggregatedMaterials().map((m, i) => (
                     <div key={i} className="flex justify-between text-sm border-b border-slate-800 pb-2">
@@ -226,16 +298,29 @@ export default function FelmeroMunkalapPage() {
                </div>
             </div>
 
-            <button onClick={generatePDF} className="w-full bg-blue-600 text-white p-6 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-               <FileText size={24} /> SZERZŐDÉS GENERÁLÁSA (PDF)
-            </button>
+            {/* Szerződés generálás gomb */}
+            <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-slate-100 text-center">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 italic">Hivatalos Dokumentum</p>
+                <button onClick={generatePDF} className="w-full bg-blue-600 text-white p-6 rounded-[2.5rem] font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all hover:bg-blue-700">
+                  <FileText size={24} /> PDF SZERZŐDÉS GENERÁLÁSA
+                </button>
+                <p className="text-[9px] text-slate-400 mt-4 italic">Kétoldalas PDF: Vállalkozási Szerződés + 1. sz. Melléklet (Költségvetés)</p>
+            </div>
           </div>
         )}
 
-        {/* Bruttó Összesítő */}
-        <div className="bg-[#0f172a] text-white p-8 rounded-[3rem] shadow-2xl border-b-[10px] border-blue-600 flex justify-between items-center sticky bottom-4 z-40">
-          <div><p className="text-[10px] font-black text-blue-400 uppercase mb-1">Bruttó Fizetendő</p><span className="text-4xl font-black text-emerald-400 tracking-tighter tabular-nums">{Math.round(brutton).toLocaleString()} Ft</span></div>
-          <div className="text-right"><p className="text-[10px] font-bold opacity-40 uppercase">27% ÁFA Tartalom</p><p className="font-bold text-sm text-slate-300">Nettó: {Math.round(totalNetOverall).toLocaleString()} Ft</p></div>
+        {/* --- FIX BRUTTÓ ÖSSZESÍTŐ (VÉGIG LÁTSZIK) --- */}
+        <div className="bg-[#0f172a] text-white p-8 rounded-[3rem] shadow-2xl border-b-[10px] border-blue-600 flex justify-between items-center sticky bottom-4 z-40 mx-2">
+          <div>
+            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">Végösszeg (Bruttó)</p>
+            <span className="text-4xl font-black text-emerald-400 tracking-tighter tabular-nums">
+              {Math.round(brutton).toLocaleString()} Ft
+            </span>
+          </div>
+          <div className="text-right">
+             <p className="text-[10px] font-bold opacity-40 uppercase">Nettó + ÁFA</p>
+             <p className="font-bold text-sm text-slate-300 italic">{Math.round(totalNetOverall).toLocaleString()} Ft + ÁFA</p>
+          </div>
         </div>
       </div>
     </div>
