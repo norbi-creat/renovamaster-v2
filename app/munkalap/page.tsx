@@ -1,37 +1,35 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, FileText, ArrowLeft, Loader2, Info, Calculator, User, MapPin, Hash, Box } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Plus, Trash2, FileText, User, MapPin, Hash, Box, Calendar, Calculator } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 export default function FelmeroMunkalapPage() {
-  const router = useRouter();
-  const [isGenerating, setIsGenerating] = useState(false);
   const [munkanemek, setMunkanemek] = useState<any[]>([]);
   const [receptek, setReceptek] = useState<any[]>([]);
-  const [lidarInput, setLidarInput] = useState("");
   
+  // Ügyfél adatok a hivatalos szerződésminták alapján
   const [customer, setCustomer] = useState({
-    name: '', address: '', taxId: '', location: '',
+    name: '',
+    birthPlaceDate: '',
+    motherName: '',
+    address: '',
+    taxId: '',
+    location: '', // Kivitelezési helyszín
     projectId: `PRJ-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
   });
 
-  const [items, setItems] = useState([{ group: '', task: '', qty: 1, unit: '', workPrice: 0, materialPrice: 0, receptDetails: [] }]);
+  const [items, setItems] = useState([{ 
+    group: '', 
+    task: '', 
+    qty: 0, 
+    unit: '', 
+    workPrice: 0, 
+    materialPrice: 0, 
+    materials: [] as any[] 
+  }]);
 
   const REZSIORADIJ = 9250;
-
-  const focsoportok = [
-    { id: '11', name: '11 - Irtás, földmunka' },
-    { id: '21', name: '21 - Kőművesmunkák' },
-    { id: '22', name: '22 - Betonozás' },
-    { id: '33', name: '33 - Szigetelések' },
-    { id: '45', name: '45 - Épületasztalos munka' },
-    { id: '47', name: '47 - Lakatos munka' },
-    { id: '48', name: '48 - Tetőfedés' },
-    { id: '75', name: '75 - Festés, mázolás' },
-    { id: 'AZ', name: 'AZ - Állványozás' }
-  ];
 
   useEffect(() => {
     const sheetId = "1QDkPgvvPx7wwTKlvoDLLwIWlY1z6ladQtoRynOYsHa4";
@@ -42,161 +40,146 @@ export default function FelmeroMunkalapPage() {
       fetch(munkanemUrl).then(res => res.text()),
       fetch(receptUrl).then(res => res.text())
     ]).then(([mCsv, rCsv]) => {
-      // JAVÍTOTT REGEX SOROK:
       const mRows = mCsv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
-      const parsedM = mRows.slice(1).map(r => ({
-        code: r[0], label: r[1], norma: parseFloat(r[2]?.replace(',', '.')) || 0, unit: r[3]
-      })).filter(i => i.label);
+      setMunkanemek(mRows.slice(1).map(r => ({ code: r[0], label: r[1], norma: parseFloat(r[2]?.replace(',', '.')) || 0, unit: r[3] })));
 
       const rRows = rCsv.split('\n').map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim()));
-      const parsedR = rRows.slice(1).map(r => ({
-        code: r[0], component: r[2], norma: parseFloat(r[3]?.replace(',', '.')) || 0, unit: r[4]
-      })).filter(r => r.code);
-
-      setMunkanemek(parsedM);
-      setReceptek(parsedR);
+      setReceptek(rRows.slice(1).map(r => ({ code: r[0], component: r[2], norma: parseFloat(r[3]?.replace(',', '.')) || 0, unit: r[4] })));
     });
   }, []);
 
   const updateItemTask = (index: number, taskLabel: string) => {
     const work = munkanemek.find(a => a.label === taskLabel);
     if (work) {
-      const calculatedWorkPrice = work.norma * REZSIORADIJ;
-      const relatedR = receptek.filter(r => r.code === work.code);
-      let currentMatPrice = 0;
-      let details: any = [];
-
-      relatedR.forEach(r => {
-        const matPrice = r.norma * REZSIORADIJ;
-        currentMatPrice += matPrice;
-        details.push(`${r.component}: ${r.norma} ${r.unit}`);
-      });
+      const relatedMaterials = receptek.filter(r => r.code === work.code);
+      const totalMatNorma = relatedMaterials.reduce((sum, r) => sum + r.norma, 0);
 
       const newItems = [...items];
       newItems[index] = { 
         ...newItems[index], 
-        task: taskLabel, workPrice: calculatedWorkPrice, materialPrice: currentMatPrice, unit: work.unit, receptDetails: details
+        task: taskLabel, 
+        workPrice: work.norma * REZSIORADIJ, 
+        materialPrice: totalMatNorma * REZSIORADIJ, 
+        unit: work.unit,
+        materials: relatedMaterials
       };
       setItems(newItems);
     }
   };
 
+  const totalNetWork = items.reduce((sum, i) => sum + (i.workPrice * i.qty), 0);
+  const totalNetMat = items.reduce((sum, i) => sum + (i.materialPrice * i.qty), 0);
+  const totalNet = totalNetWork + totalNetMat;
+  const vat = totalNet * 0.27;
+
   const generatePDF = () => {
-    setIsGenerating(true);
-    try {
-      const doc = new jsPDF();
-      doc.setFontSize(22);
-      doc.text("FELMÉRŐ MUNKALAP", 105, 20, { align: "center" });
-      
-      doc.setFontSize(10);
-      doc.text(`Projekt ID: ${customer.projectId}`, 14, 35);
-      doc.text(`Ügyfél: ${customer.name}`, 14, 42);
-      doc.text(`Helyszín: ${customer.location}`, 14, 49);
-      doc.text(`Dátum: ${new Date().toLocaleDateString('hu-HU')}`, 14, 56);
+    const doc = new jsPDF() as any;
+    doc.setFontSize(18);
+    doc.text("FELMÉRŐ MUNKALAP ÉS ANYAGKIÍRÁS", 105, 15, { align: "center" });
 
-      const tableData = items.map(item => [
-        item.task,
-        item.qty + " " + item.unit,
-        Math.round(item.workPrice + item.materialPrice).toLocaleString() + " Ft",
-        Math.round((item.workPrice + item.materialPrice) * item.qty).toLocaleString() + " Ft"
-      ]);
+    doc.setFontSize(9);
+    doc.text(`Ügyfél neve: ${customer.name}`, 14, 25);
+    doc.text(`Lakcím: ${customer.address}`, 14, 30);
+    doc.text(`Adóazonosító: ${customer.taxId}`, 14, 35);
+    doc.text(`Helyszín: ${customer.location}`, 14, 40);
 
-      (doc as any).autoTable({
-        startY: 65,
-        head: [['Megnevezés', 'Menny.', 'Egységár', 'Összesen']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [30, 41, 59] }
+    const body = items.map(item => [
+      item.task,
+      `${item.qty} ${item.unit}`,
+      `${Math.round(item.workPrice).toLocaleString()} Ft`,
+      `${Math.round(item.materialPrice).toLocaleString()} Ft`,
+      `${Math.round((item.workPrice + item.materialPrice) * item.qty).toLocaleString()} Ft`
+    ]);
+
+    doc.autoTable({
+      startY: 45,
+      head: [['Megnevezés', 'Mennyiség', 'Munkadíj/egys', 'Anyagdíj/egys', 'Összesen']],
+      body: body,
+      theme: 'grid',
+      headStyles: { fillColor: [31, 41, 55] }
+    });
+
+    // Anyaglista részletezése
+    let finalY = (doc as any).lastAutoTable.cursor.y + 10;
+    doc.text("RÉSZLETES ANYAGSZÜKSÉGLET:", 14, finalY);
+    items.forEach(item => {
+      item.materials.forEach(m => {
+        finalY += 5;
+        doc.text(`- ${m.component}: ${Math.round(m.norma * item.qty * 100) / 100} ${m.unit}`, 20, finalY);
       });
+    });
 
-      doc.save(`Felmerolap_${customer.name || 'projekt'}.pdf`);
-    } catch (e) {
-      console.error(e);
-      alert("Hiba a PDF során!");
-    }
-    setIsGenerating(false);
+    doc.save(`Munkalap_${customer.name}.pdf`);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 pb-32">
-      <div className="max-w-md mx-auto space-y-4">
-        <header className="bg-slate-900 p-6 rounded-[2.5rem] text-white shadow-xl flex justify-between items-center border-b-4 border-emerald-500">
-          <div>
-            <h1 className="text-xl font-black italic">FELMÉRŐ LAP</h1>
-            <p className="text-[10px] text-emerald-400 font-bold uppercase">{customer.projectId}</p>
-          </div>
-          <button onClick={generatePDF} className="bg-emerald-600 p-3 rounded-2xl shadow-lg active:scale-95 transition-all">
-            <FileText size={24} />
-          </button>
-        </header>
-
-        {/* LiDAR Input */}
-        <div className="bg-indigo-900 p-4 rounded-3xl text-white shadow-lg">
-          <div className="flex items-center gap-2 mb-2 text-indigo-200 text-[10px] font-black uppercase tracking-tighter">
-            <Box size={14} /> LiDAR Adat Beillesztés
-          </div>
-          <textarea 
-            placeholder="Polycam / Canvas export ide..."
-            className="w-full bg-indigo-800/50 p-3 rounded-xl text-xs outline-none border border-indigo-700 h-14"
-            value={lidarInput}
-            onChange={(e) => setLidarInput(e.target.value)}
-          />
+    <div className="min-h-screen bg-slate-50 p-4">
+      <div className="max-w-xl mx-auto space-y-4">
+        <div className="bg-slate-900 p-6 rounded-3xl text-white flex justify-between items-center shadow-xl">
+          <h1 className="text-xl font-black italic text-blue-400 uppercase">Felmérő Dashboard</h1>
+          <button onClick={generatePDF} className="bg-blue-600 p-3 rounded-2xl"><FileText /></button>
         </div>
 
-        {/* Adatok */}
-        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 space-y-3">
-          <input placeholder="Ügyfél neve" className="w-full p-3 bg-slate-50 rounded-xl text-sm font-bold outline-none border border-slate-100" onChange={e => setCustomer({...customer, name: e.target.value})} />
-          <input placeholder="Helyszín" className="w-full p-3 bg-slate-50 rounded-xl text-sm outline-none border border-slate-100" onChange={e => setCustomer({...customer, location: e.target.value})} />
+        {/* Ügyfél Adatok Szekció */}
+        <div className="bg-white p-5 rounded-3xl shadow-sm space-y-3 border border-slate-200">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Ügyfél adatok</p>
+          <input placeholder="Megrendelő teljes neve" className="w-full p-3 bg-slate-50 rounded-xl text-sm" onChange={e => setCustomer({...customer, name: e.target.value})} />
+          <div className="grid grid-cols-2 gap-2">
+            <input placeholder="Születési hely/idő" className="p-3 bg-slate-50 rounded-xl text-sm" onChange={e => setCustomer({...customer, birthPlaceDate: e.target.value})} />
+            <input placeholder="Adóazonosító jel" className="p-3 bg-slate-50 rounded-xl text-sm" onChange={e => setCustomer({...customer, taxId: e.target.value})} />
+          </div>
+          <input placeholder="Lakóhely (Cím)" className="w-full p-3 bg-slate-50 rounded-xl text-sm" onChange={e => setCustomer({...customer, address: e.target.value})} />
+          <input placeholder="Kivitelezési helyszín (ha eltér)" className="w-full p-3 bg-blue-50 rounded-xl text-sm font-bold border border-blue-100" onChange={e => setCustomer({...customer, location: e.target.value})} />
         </div>
 
         {/* Tételek */}
         {items.map((item, index) => (
-          <div key={index} className="bg-white p-5 rounded-3xl shadow-md border border-slate-200 relative">
-            <select 
-              value={item.group}
-              onChange={(e) => {
-                const newItems = [...items];
-                newItems[index].group = e.target.value;
-                setItems(newItems);
-              }}
-              className="w-full p-3 bg-slate-100 rounded-xl mb-3 text-sm font-bold outline-none"
-            >
-              <option value="">-- Szakág --</option>
-              {focsoportok.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+          <div key={index} className="bg-white p-5 rounded-3xl shadow-md border border-slate-200">
+            <select onChange={(e) => updateItemTask(index, e.target.value)} className="w-full p-3 bg-slate-100 rounded-xl mb-3 text-sm font-bold">
+              <option value="">Válassz munkanemet...</option>
+              {munkanemek.map((m, i) => <option key={i} value={m.label}>{m.label}</option>)}
             </select>
-
-            {item.group && (
-              <select 
-                onChange={(e) => updateItemTask(index, e.target.value)}
-                className="w-full p-3 bg-emerald-50 rounded-xl mb-3 text-sm font-semibold outline-none border border-emerald-100"
-              >
-                <option value="">-- Munkanem --</option>
-                {munkanemek.filter(m => m.code?.startsWith(item.group)).map((m, i) => (
-                  <option key={i} value={m.label}>{m.label}</option>
-                ))}
-              </select>
-            )}
-
-            <div className="flex justify-between items-center gap-4">
-              <div className="w-1/2">
-                <p className="text-[9px] font-bold text-slate-400 mb-1 uppercase">Mennyiség</p>
-                <input type="number" value={item.qty} onChange={e => {
+            
+            <div className="flex gap-4 items-end">
+              <div className="w-1/3">
+                <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">Mennyiség</p>
+                <input type="number" className="w-full p-3 bg-slate-50 rounded-xl font-bold" onChange={e => {
                   const newItems = [...items];
                   newItems[index].qty = parseFloat(e.target.value) || 0;
                   setItems(newItems);
-                }} className="w-full bg-slate-100 p-3 rounded-xl font-black outline-none" />
+                }} />
               </div>
-              <div className="w-1/2 text-right">
-                <p className="text-[9px] font-bold text-slate-400 mb-1 uppercase">Bruttó</p>
-                <p className="text-lg font-black text-slate-800">{Math.round((item.workPrice + item.materialPrice) * item.qty).toLocaleString()} Ft</p>
+              <div className="w-2/3 text-right">
+                <p className="text-[10px] font-bold text-blue-600">Munkadíj: {Math.round(item.workPrice * item.qty).toLocaleString()} Ft</p>
+                <p className="text-[10px] font-bold text-emerald-600">Anyagdíj: {Math.round(item.materialPrice * item.qty).toLocaleString()} Ft</p>
               </div>
             </div>
+            
+            {item.materials.length > 0 && (
+              <div className="mt-3 p-3 bg-amber-50 rounded-xl text-[10px] text-amber-900 border border-amber-100">
+                <strong>Szükséges anyagok:</strong> {item.materials.map(m => `${m.component} (${Math.round(m.norma * item.qty * 100)/100} ${m.unit})`).join(', ')}
+              </div>
+            )}
           </div>
         ))}
 
-        <button onClick={() => setItems([...items, { group: '', task: '', qty: 1, unit: '', workPrice: 0, materialPrice: 0, receptDetails: [] }])} className="w-full p-4 border-2 border-dashed border-slate-300 rounded-3xl text-slate-400 font-bold flex items-center justify-center gap-2 hover:bg-white transition-all">
-          <Plus size={20}/> Új sor
-        </button>
+        <button onClick={() => setItems([...items, { group: '', task: '', qty: 0, unit: '', workPrice: 0, materialPrice: 0, materials: [] }])} className="w-full p-4 border-2 border-dashed border-slate-300 rounded-3xl text-slate-400 font-bold">+ Új tétel hozzáadása</button>
+
+        {/* Összesítő */}
+        <div className="bg-slate-900 text-white p-6 rounded-[2.5rem] shadow-2xl">
+          <div className="flex justify-between text-xs opacity-60 mb-2">
+            <span>Nettó összesen:</span>
+            <span>{Math.round(totalNet).toLocaleString()} Ft</span>
+          </div>
+          <div className="flex justify-between text-xs opacity-60 mb-4 border-b border-slate-700 pb-2">
+            <span>ÁFA (27%):</span>
+            <span>{Math.round(vat).toLocaleString()} Ft</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-bold uppercase">Bruttó fizetendő:</span>
+            <span className="text-3xl font-black text-emerald-400">{Math.round(totalNet + vat).toLocaleString()} Ft</span>
+          </div>
+        </div>
       </div>
     </div>
   );
